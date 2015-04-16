@@ -5,11 +5,19 @@ from pysistence import make_dict
 CELL_TYPES = ('EMPTY', 'TEXT', 'NUMBER', 'DATE', 'BOOLEAN', 'ERROR', 'BLANK')
 
 
+class InvalidWorkbook(Exception):
+    pass
+
+
 def xlrd_reader(f):
     """Parse an excel workbook using xlrd into an immutable dict
     """
+    f.seek(0)
+    data = f.read()
+    if data == '':
+        raise InvalidWorkbook('Empty')
     sheets = {}
-    book = xlrd.open_workbook(file_contents=f.read())
+    book = xlrd.open_workbook(file_contents=data)
     for name in book.sheet_names():
         sheet = book.sheet_by_name(name)
         sheets[name] = {}
@@ -17,7 +25,7 @@ def xlrd_reader(f):
             for col in range(sheet.nrows):
                 raw = sheet.cell(row, col)
                 sheets[name][(row, col)] = Cell(
-                    raw.value, CELL_TYPES[raw.ctype], name, row, col)
+                    raw.value, CELL_TYPES[raw.ctype], Location(name, row, col))
 
     return make_dict(sheets)
 
@@ -30,7 +38,7 @@ class Location(object):
     """Represents the location within a workbook of a cell
     """
     def __init__(self, sheet, row, col):
-        if not isinstance(sheet, str):
+        if type(sheet) not in (str, unicode):
             raise InvalidCellLocation
         if not isinstance(row, int) or row < 0:
             raise InvalidCellLocation

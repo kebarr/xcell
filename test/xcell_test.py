@@ -1,9 +1,10 @@
 from StringIO import StringIO
 import unittest
-
+import xlsxwriter
 from xcell import (
     Cell, CELL_TYPES, Location, Workbook, InvalidCellType, InvalidCellLocation
 )
+from xcell.read import xlrd_reader
 
 
 class TestCell(unittest.TestCase):
@@ -86,3 +87,20 @@ class TestWorkbook(unittest.TestCase):
         expected = self.cell
 
         self.assertEqual(expected, actual)
+
+
+class TestXlrdReader(unittest.TestCase):
+    def setUp(self):
+        self.sheet_names = ('A1', 'A2')
+        self.reader = FakeReader(self.sheet_names, [])
+
+    def test_returned_data_should_be_immutable(self):
+        f = StringIO()
+        workbook = xlsxwriter.Workbook(f)
+        worksheet = workbook.add_worksheet('foo')
+        worksheet.write('A1', 'cell_contents')
+        workbook.close()
+        data = xlrd_reader(f)
+
+        with self.assertRaises(NotImplementedError):
+            data['bar'] = {}
