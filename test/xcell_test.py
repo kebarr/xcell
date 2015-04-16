@@ -91,16 +91,23 @@ class TestWorkbook(unittest.TestCase):
 
 class TestXlrdReader(unittest.TestCase):
     def setUp(self):
-        self.sheet_names = ('A1', 'A2')
-        self.reader = FakeReader(self.sheet_names, [])
+        self.f = StringIO()
+        self.workbook = xlsxwriter.Workbook(self.f)
 
     def test_returned_data_should_be_immutable(self):
-        f = StringIO()
-        workbook = xlsxwriter.Workbook(f)
-        worksheet = workbook.add_worksheet('foo')
+        worksheet = self.workbook.add_worksheet('foo')
         worksheet.write('A1', 'cell_contents')
-        workbook.close()
-        data = xlrd_reader(f)
+        self.workbook.close()
+        data = xlrd_reader(self.f)
 
         with self.assertRaises(NotImplementedError):
             data['bar'] = {}
+
+    def test_workbook_and_reader_should_be_compatible(self):
+        self.workbook.add_worksheet('foo')
+        self.workbook.close()
+
+        book = Workbook(self.f, xlrd_reader)
+
+        self.assertEqual(('foo',), book.sheet_names())
+        self.assertEqual(0, len(book.sheets['foo'].values()))
