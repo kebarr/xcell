@@ -1,7 +1,9 @@
 from StringIO import StringIO
 import unittest
 
-from xcell import Cell, CELL_TYPES, Location, Workbook
+from xcell import (
+    Cell, CELL_TYPES, Location, Workbook, InvalidCellType, InvalidCellLocation
+)
 
 
 class TestCell(unittest.TestCase):
@@ -11,6 +13,15 @@ class TestCell(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
+    def test_cell_datatype_should_be_one_of_cell_types(self):
+        for t in CELL_TYPES:
+            cell = Cell('foo', t, Location('bar', 0, 0))
+
+        with self.assertRaises(InvalidCellType):
+            cell = Cell('foo', 'bobbins', Location('bar', 0, 0))
+
+        del cell
+
 
 class TestLocation(unittest.TestCase):
     def test_when_representative_of_same_location_should_be_equal(self):
@@ -18,6 +29,25 @@ class TestLocation(unittest.TestCase):
         expected = Location('foo', 0, 0)
 
         self.assertEqual(expected, actual)
+
+    def test_a_sheet_should_be_a_string(self):
+        loc = Location('name', 0, 0)
+
+        with self.assertRaises(InvalidCellLocation):
+            loc = Location(0, 0, 0)
+
+        del loc
+
+    def test_row_and_col_should_be_ints_valued_zero_or_more(self):
+        loc = Location('name', 0, 0)
+
+        with self.assertRaises(InvalidCellLocation):
+            loc = Location('name', -1, 0)
+
+        with self.assertRaises(InvalidCellLocation):
+            loc = Location('name', 0, -1)
+
+        del loc
 
 
 class FakeReader(object):

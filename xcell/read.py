@@ -22,29 +22,42 @@ def xlrd_reader(f):
     return make_dict(sheets)
 
 
+class InvalidCellLocation(Exception):
+    pass
+
+
 class Location(object):
     """Represents the location within a workbook of a cell
     """
     def __init__(self, sheet, row, col):
+        if not isinstance(sheet, str):
+            raise InvalidCellLocation
+        if not isinstance(row, int) or row < 0:
+            raise InvalidCellLocation
+        if not isinstance(col, int) or col < 0:
+            raise InvalidCellLocation
         self.sheet = sheet
         self.row = row
         self.col = col
 
     def __eq__(self, other):
-        try:
-            if self.sheet == other.sheet:
-                if (self.row, self.col) == (other.row, other.col):
-                    return True
-        except:
-            pass
+        if self.sheet == other.sheet:
+            if (self.row, self.col) == (other.row, other.col):
+                return True
 
         return False
+
+
+class InvalidCellType(Exception):
+    pass
 
 
 class Cell(object):
     """Represents a cell in a workbook
     """
     def __init__(self, contents, datatype, location):
+        if datatype not in CELL_TYPES:
+            raise InvalidCellType
         self.contents = contents
         self.datatype = datatype
         self.location = location
@@ -61,7 +74,7 @@ class Cell(object):
 
 
 class Workbook(object):
-    """Represent an excel workbook
+    """Represent a workbook
     """
     def __init__(self, f, reader):
         self.sheets = reader(f)
