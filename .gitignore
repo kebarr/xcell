@@ -1,0 +1,8 @@
+static/report-*.html
+static/spreadsheets/*
+*.pyc
+build
+env
+*.egg-*
+dist
+*.swp
